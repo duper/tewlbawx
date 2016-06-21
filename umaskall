@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+#
+#             umaskall bash script for Linux and GNU coreutils          
+# -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+# written by duper!super@irc.security.chat [Tue Jun 21 02:39:45 EDT 2016]
+#
+# This script assists in changing the UFS (Unix File System) style permission
+# bits in order to match the provided octal mode mask value for each supplied
+# directory pathname. The pathnames are iterated over one-by-one, while each 
+# path itself is treated in a depth-first recursion fashion. A backup tarball
+# is created in $USER's $HOME directory in case something happens to go wrong.
+# The code here is particularly useful for public_html directories and the like!
+#
+
+# set -x
+
+function usage() {
+  echo
+  echo "usage: $0 MASK PATH [...]"
+  echo "  MASK  umask(2) style octal mode value for target directory's permissions"
+  echo "  PATH  the directory name to recursively set filesystem modes in like chmod(2)"
+  echo
+  echo "example: $0 0027 testdir1 testdir2"
+
+  exit -1
+}
+
+if [ "`uname -s`" != "Linux" ] 
+  then echo "error: $0 is designed for GNU coreutils on Linux!"
+
+  exit -2
+fi
+
+[ ! $1 ] && usage;
+
+declare -ir modeMask="$1" 
+
+if [ $modeMask -eq 0 ] 
+  then "$0: invalid mode mask value detected!"
+
+  usage;
+fi
+
+declare -ar pathArry=("`shift && echo $@`")
+
+umask -- "$modeMask"
+
+export VERSION_CONTROL='existing'
+
+function error_exit() {
+  echo "$1: an error occurred at line number $2: $3 contains backup!"
+
+  exit -- $4
+}
+
+for s in $pathArry
+  do if [ ! -d "$s" ] 
+    then echo "$0: cannot copy new permissions: $s is not a directory pathname!"
+
+    exit -3
+  else
+    declare -xl adir="${HOME}/.${s}.${$}-${RANDOM}" 
+    declare -xl abak="${adir}.tar.xz"
+
+    cp -ab --strip-trailing-slashes --no-preserve='mode' -- "$s" "$adir"
+
+    [ $? -ne 0 ] && error_exit $0 $BASH_LINENO $adir -4
+
+    tar -cJf "$abak" "$adir"
+
+    [ $? -ne 0 ] && error_exit $0 $BASH_LINENO $adir -5
+
+    chmod -c 0400 -- "${adir}.tar.xz"
+
+    [ $? -ne 0 ] && error_exit $0 $BASH_LINENO $adir -6
+
+    rm -fr -- "$s" 
+
+    [ $? -ne 0 ] && error_exit $0 $BASH_LINENO $adir -7
+
+    mv -vf -- "$adir" "$s" 
+
+    [ $? -ne 0 ] && error_exit $0 $BASH_LINENO $adir -8
+
+    rm -fr -- "$abak"
+  fi
+done
+
+exit 0
