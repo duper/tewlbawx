@@ -66,7 +66,7 @@ for s in $pathArry
 
     [ $? -ne 0 ] && error_exit $0 $BASH_LINENO $adir -4
 
-    tar -cJf "$abak" "$adir"
+    PRISTINE_TAR_COMPAT=1 tar -cJf "$abak" "$adir"
 
     [ $? -ne 0 ] && error_exit $0 $BASH_LINENO $adir -5
 
