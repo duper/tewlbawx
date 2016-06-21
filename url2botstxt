@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+#
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+# = url2botstxt - convert URL syntax into associated robots.txt locations =
+# =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+#  Coded by duper!super@irc.security.chat as part of tewlbawx script pack.
+#
+
+if [ ! $1 ]
+  then echo -- "usage: $0 URL"
+
+  exit -- -1
+fi
+
+echo -- "$1" | sed -r -- 's,(https?://)?([^/]+)(/.*)?,\1\2/robots.txt,'
+
+exit -- 0
